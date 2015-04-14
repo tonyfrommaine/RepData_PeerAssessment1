@@ -1,9 +1,4 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 This program is for the peer assignment of Reproducubile Research Assessment 1  
 The exact instructions are in the GitHub in the doc direction, in a  
 file instructions.pdf  
@@ -29,15 +24,27 @@ of 17,568 observations in this dataset.
 2. Read the CSV  
 3. Format the Date  
 
-```{r}  
+
+```r
 unzip("activity.zip");
 rawData<-read.csv("activity.csv");
 rawData$date <- as.Date(rawData$date, "%Y-%m-%d");
 ```
 
 Now check the data looks correct  
-```{r}
+
+```r
 head(rawData);
+```
+
+```
+##   steps       date interval
+## 1    NA 2012-10-01        0
+## 2    NA 2012-10-01        5
+## 3    NA 2012-10-01       10
+## 4    NA 2012-10-01       15
+## 5    NA 2012-10-01       20
+## 6    NA 2012-10-01       25
 ```
 
 
@@ -46,22 +53,35 @@ head(rawData);
 2. Create a histogram based on this aggregated data 
 3. Calculate the median and mean  
 
-```{r}
+
+```r
 stepsTotal <- tapply(rawData$steps, rawData$date, sum);
 hist(stepsTotal,  breaks=15, xlab = "Total Steps by Day", ylab = "Frequency", 
      main = "Total Step Histogram", col="red");
-```  
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
   
 Calculate the mean removing the NA's  
-```{r}
+
+```r
 stepMean<-mean(stepsTotal,na.rm=TRUE);
 stepMean;
 ```
 
+```
+## [1] 10766.19
+```
+
 Calculate the median removing the NA's  
-```{r}
+
+```r
 stepMedian<-median(stepsTotal,na.rm=TRUE);
 stepMedian;
+```
+
+```
+## [1] 10765
 ```
 
 ## What is the average daily activity pattern?
