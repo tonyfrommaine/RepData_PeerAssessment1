@@ -5,7 +5,7 @@ output:
     keep_md: true
 ---
 This program is for the peer assignment of Reproducubile Research Assessment 1  
-The exact instructions are in the GitHub in the doc direction, in a  
+The exact instructions are in the GitHub under the "doc"" directory, in a  
 file instructions.pdf  
 
 **Note on downloading the initial dataset: **   
@@ -65,11 +65,60 @@ stepMedian;
 ```
 
 ## What is the average daily activity pattern?
+Since the data is already broken out by 5 minute intervals for each day, it should be  
+aggregated by the time intervals.
 
+1. Build the 5 minute slices  
+2. Calculate the mean for each 5 minute interval  
+3. Create a plot to reprsent the 5 minute intervals across all days  
+4. Calculate and display the 5 minute interval with the highest amount of steps  
 
-
+Build slices and mean by slice  
+```{r}
+stepsIntervalMean <- tapply(rawData$steps, rawData$interval, mean, na.rm = TRUE)
+```
+Create a simple plot of type="l"  
+```{r}
+plot(row.names(stepsIntervalMean),stepsIntervalMean,
+     type="l",
+     xlab="Five Minute Interval",
+     ylab="Avg. Number of Steps",
+     main="Average Steps per Five Minute Interval",
+     col="red");
+```
+Find the slice with the maximum number of steps  
+```{r}
+maxSlice <- names(which.max(stepsIntervalMean));
+maxSlice;
+```
 ## Imputing missing values
+1.  Find and display the number of observations without complete cases 
+2.  Fill in values for incomplete cases with derived value in a new dataset named enrichData
+3.  Confirm the NA's have been removed  
+4.  Create histogram for number of steps 
 
-
+Calcualte and display rows with NA's  
+```{r}
+incompleteRowCount <- length(which(!complete.cases(rawData)));
+incompleteRowCount;
+```
+Fill in NA's with derived value from interval mean which was previously calculated  
+```{r}
+enrichData <- rawData
+enrichData$steps[is.na(enrichData$steps)] <- stepsIntervalMean;
+stepsEnrichTotal <- tapply(enrichData$steps, enrichData$date, sum);
+```
+Confirm no more NA's exist  
+```{r}
+incompleteRowCount <- length(which(!complete.cases(enrichData)));
+incompleteRowCount;
+```
+Create histogram with NA's taken out  
+```{r}
+hist(stepsEnrichTotal,  breaks=15, xlab = "Total Steps by Day", ylab = "Frequency", 
+     main = "Total Step Histogram replacing NA's", col="red");
+```
+Calculate Mean and Median of enriched dataset
+```{r}
 
 ## Are there differences in activity patterns between weekdays and weekends?
