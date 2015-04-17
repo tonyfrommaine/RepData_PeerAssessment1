@@ -17,10 +17,29 @@ The variables included in this dataset are:
 * interval: Identifier for the 5-minute interval in which measurement was taken  
 
 The dataset is stored in a comma-separated-value (CSV) file and there are a total  
-of 17,568 observations in this dataset.  
+of 17,568 observations in this dataset.
 
-## Loading and preprocessing the data
-1. Unzip the file  
+First, load required packages:   
+
+```r
+require(plyr);
+```
+
+```
+## Loading required package: plyr
+```
+
+```r
+require(lattice);
+```
+
+```
+## Loading required package: lattice
+```
+
+## Loading and preprocessing the data  
+Overview of steps in this phase:  
+1. Unzip the local file (see note on downloading above)   
 2. Read the CSV  
 3. Format the Date  
 
@@ -48,7 +67,8 @@ head(rawData);
 ```
 
 
-## What is mean total number of steps taken per day?
+## What is mean total number of steps taken per day?  
+Overview of steps in this phase:  
 1. Aggregate the steps by date  
 2. Create a histogram based on this aggregated data 
 3. Calculate the median and mean  
@@ -60,7 +80,7 @@ hist(stepsTotal,  breaks=15, xlab = "Total Steps by Day", ylab = "Frequency",
      main = "Total Step Histogram", col="red");
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png) 
   
 Calculate the mean removing the NA's  
 
@@ -86,8 +106,9 @@ stepMedian;
 
 ## What is the average daily activity pattern?
 Since the data is already broken out by 5 minute intervals for each day, it should be  
-aggregated by the time intervals.
+aggregated by the time intervals.  
 
+Overview of steps in this phase:  
 1. Build the 5 minute slices  
 2. Calculate the mean for each 5 minute interval  
 3. Create a plot to reprsent the 5 minute intervals across all days  
@@ -109,7 +130,8 @@ plot(row.names(stepsIntervalMean),stepsIntervalMean,
      col="red");
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-7-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png) 
+
 Find the slice with the maximum number of steps  
 
 ```r
@@ -120,11 +142,14 @@ maxSlice;
 ```
 ## [1] "835"
 ```
-## Imputing missing values
+## Imputing missing values  
+Overview of steps in this phase:  
 1.  Find and display the number of observations without complete cases 
-2.  Fill in values for incomplete cases with derived value in a new dataset named enrichData
+2.  Fill in values for incomplete cases with derived value in a new dataset named enrichData  
 3.  Confirm the NA's have been removed  
-4.  Create histogram for number of steps 
+4.  Create histogram for number of steps  
+5.  Calcualte the mean and median  
+6.  Report on observed difference.  
 
 Calcualte and display rows with NA's  
 
@@ -136,7 +161,10 @@ incompleteRowCount;
 ```
 ## [1] 2304
 ```
-Fill in NA's with derived value from interval mean which was previously calculated  
+Fill in NA's with derived value from interval mean which was previously calculated.  
+This method was chosen as it can closely mimic the time interval by filling with the  
+appropriate value.  Other methods considered, but not chosen include: overall mean for  
+all times and all days,  mean for the day for all intervals, medians were also considered.  
 
 ```r
 enrichData <- rawData
@@ -160,9 +188,92 @@ hist(stepsEnrichTotal,  breaks=15, xlab = "Total Steps by Day", ylab = "Frequenc
      main = "Total Step Histogram replacing NA's", col="red");
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-12-1.png) 
-Calculate Mean and Median of enriched dataset
+![](PA1_template_files/figure-html/unnamed-chunk-13-1.png) 
+
+Calculate Mean and Median fo the enriched data.   
+First create the total steps per date.
 
 ```r
-## Are there differences in activity patterns between weekdays and weekends?
+stepsEnrichTotal <- tapply(enrichData$steps, enrichData$date, sum);
 ```
+Calculate the mean removing the NA's  
+
+```r
+stepMean<-mean(stepsEnrichTotal,na.rm=TRUE);
+stepMean;
+```
+
+```
+## [1] 10766.19
+```
+
+Calculate the median removing the NA's  
+
+```r
+stepMedian<-median(stepsEnrichTotal,na.rm=TRUE);
+stepMedian;
+```
+
+```
+## [1] 10766.19
+```
+The result is that the mean remains unchanged, but the median shifts to the right.  
+
+## Are there differences in activity patterns between weekdays and weekends?  
+Note:  This analysis will use the original data before replacement of the NA's, **not  
+the enriched data** from the previous step which overwrote the NA's.  
+This is to remain consistent with results of the  first step in this analysis  
+and provide a true comparison.  
+
+Overview of steps in this phase:  
+1.  Create the two level factor for weeekday and weekend 
+2.  Summarize using dplyr based on factor for intervals   
+3.  Create the paneled plot comparing Weekend to Weekday    
+4.  Report observations    
+
+Create the levels  
+
+```r
+dayData <- rawData;
+dayName <- weekdays(rawData$date);
+dayData$dayTypeIndicator <- as.factor(ifelse(dayName %in% c("Saturday","Sunday"), "Weekend", 
+                                   "Weekday"));
+```
+Summarize and check the head to ensure it is correct  
+
+```r
+summedDayData <- ddply(dayData, .(interval, dayTypeIndicator),
+                       summarise,
+                       intervalMean = mean(steps, na.rm=TRUE));  
+head(summedDayData);
+```
+
+```
+##   interval dayTypeIndicator intervalMean
+## 1        0          Weekday    2.3333333
+## 2        0          Weekend    0.0000000
+## 3        5          Weekday    0.4615385
+## 4        5          Weekend    0.0000000
+## 5       10          Weekday    0.1794872
+## 6       10          Weekend    0.0000000
+```
+Create the plot using lattice package  
+
+```r
+xyplot(intervalMean ~ interval | dayTypeIndicator,
+       ylab="Avg. Steps per Interval",
+       xlab ="5 Minute Interval Number",
+       main ="Weekend vs. Weekday Steps per Interval",
+       data = summedDayData,
+       type = "l", 
+       col="red",
+       layout = c(1, 2));
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-19-1.png) 
+
+**Observations:**    
+-  Weekday has faster ramp up of activity in the morning.  
+-  Weekend has more sustained activity mid-day.  
+-  Weekend activity lasts longer into the night than weekday.  
+-  Overall activity on weekend is more sustained.
